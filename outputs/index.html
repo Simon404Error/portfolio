@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>龙QY — 嵌入式工程师 · 作品集</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface-hover: #1a1a26;
+    --border: #1e1e2e;
+    --accent: #4da6ff;
+    --accent-glow: rgba(77, 166, 255, 0.15);
+    --text: #e0e0e8;
+    --text-dim: #8888a0;
+    --text-bright: #ffffff;
+    --radius: 8px;
+    --gap: 24px;
+    --max-w: 960px;
+    --nav-h: 56px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Nav */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    height: var(--nav-h);
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+  }
+  nav .nav-inner {
+    width: 100%; max-width: var(--max-w);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+  }
+  nav .logo { font-weight: 700; font-size: 18px; color: var(--text-bright); letter-spacing: -0.3px; }
+  nav .logo span { color: var(--accent); }
+  nav .nav-links { display: flex; gap: 24px; list-style: none; }
+  nav .nav-links a {
+    color: var(--text-dim); text-decoration: none; font-size: 14px;
+    transition: color 0.2s;
+  }
+  nav .nav-links a:hover { color: var(--text-bright); }
+
+  /* Layout */
+  section { padding: 64px 20px; }
+  section:nth-child(even) { background: var(--surface); }
+  .container { max-width: var(--max-w); margin: 0 auto; }
+
+  /* Section headers */
+  .section-label {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--accent); margin-bottom: 8px; font-weight: 600;
+  }
+  .section-title {
+    font-size: 28px; font-weight: 700; color: var(--text-bright);
+    margin-bottom: 32px; letter-spacing: -0.5px;
+  }
+
+  /* Hero */
+  #hero {
+    padding: 80px 20px 64px; text-align: center;
+  }
+  #hero .avatar {
+    width: 96px; height: 96px; border-radius: 50%;
+    background: linear-gradient(135deg, #1a3a5c, #0d2137);
+    border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 36px; color: var(--accent); font-weight: 700;
+  }
+  #hero h1 { font-size: 40px; font-weight: 800; color: var(--text-bright); letter-spacing: -1px; }
+  #hero h1 span { color: var(--accent); }
+  #hero .subtitle { font-size: 18px; color: var(--text-dim); margin-top: 8px; }
+  #hero .tags { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+  #hero .tags span {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 4px 14px; border-radius: 20px; font-size: 13px; color: var(--text-dim);
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .card:hover { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+
+  /* Info grid */
+  .info-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .info-item { display: flex; gap: 8px; font-size: 14px; }
+  .info-item .label { color: var(--text-dim); flex-shrink: 0; }
+  .info-item .value { color: var(--text); }
+
+  /* Education */
+  .edu-block { border-left: 2px solid var(--accent); padding-left: 20px; }
+  .edu-block .period { font-size: 13px; color: var(--text-dim); }
+  .edu-block .school { font-size: 20px; font-weight: 700; color: var(--text-bright); }
+  .edu-block .detail { font-size: 15px; color: var(--text); margin-top: 4px; }
+
+  /* Skills */
+  .skills-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--gap);
+  }
+  .skill-cat h3 { font-size: 16px; font-weight: 600; color: var(--text-bright); margin-bottom: 10px; }
+  .skill-cat .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .skill-cat .chip {
+    background: rgba(77,166,255,0.08); color: var(--accent);
+    padding: 3px 12px; border-radius: 4px; font-size: 13px;
+    border: 1px solid rgba(77,166,255,0.15);
+  }
+
+  /* Projects */
+  .projects-list { display: flex; flex-direction: column; gap: var(--gap); }
+  .project-card .proj-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; }
+  .project-card .proj-name { font-size: 18px; font-weight: 700; color: var(--text-bright); }
+  .project-card .proj-role {
+    font-size: 12px; background: rgba(77,166,255,0.1); color: var(--accent);
+    padding: 2px 10px; border-radius: 4px; white-space: nowrap;
+  }
+  .project-card .proj-period { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+  .project-card .proj-desc { font-size: 14px; color: var(--text); margin-top: 12px; line-height: 1.8; }
+  .project-card .proj-tech { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .project-card .proj-tech span {
+    font-size: 12px; background: var(--bg); padding: 2px 10px; border-radius: 4px;
+    color: var(--text-dim); border: 1px solid var(--border);
+  }
+
+  /* Internships */
+  .timeline { display: flex; flex-direction: column; gap: var(--gap); }
+  .timeline-item { display: flex; gap: 20px; }
+  .timeline-dot {
+    width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
+    flex-shrink: 0; margin-top: 6px;
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .timeline-content { flex: 1; }
+  .timeline-content .tl-period { font-size: 13px; color: var(--text-dim); }
+  .timeline-content .tl-org { font-size: 17px; font-weight: 700; color: var(--text-bright); }
+  .timeline-content .tl-role { font-size: 14px; color: var(--accent); margin-top: 2px; }
+  .timeline-content .tl-desc { font-size: 14px; color: var(--text); margin-top: 8px; line-height: 1.8; }
+
+  /* Awards */
+  .awards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+  .award-item {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px;
+  }
+  .award-item .award-level {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--accent); font-weight: 600;
+  }
+  .award-item .award-name { font-size: 15px; font-weight: 600; color: var(--text-bright); margin-top: 6px; }
+  .award-item .award-date { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+  /* Contact */
+  #contact .contact-links { display: flex; gap: 24px; flex-wrap: wrap; }
+  #contact .contact-item { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text); }
+  #contact .contact-item .icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: rgba(77,166,255,0.1); display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center; padding: 32px 20px;
+    font-size: 13px; color: var(--text-dim); border-top: 1px solid var(--border);
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    nav .nav-links { gap: 14px; }
+    nav .nav-links a { font-size: 13px; }
+    #hero h1 { font-size: 30px; }
+    .section-title { font-size: 24px; }
+    .info-grid { grid-template-columns: 1fr 1fr; }
+    .timeline-item { gap: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">Long<span>QY</span></div>
+    <ul class="nav-links">
+      <li><a href="#hero">首页</a></li>
+      <li><a href="#projects">项目</a></li>
+      <li><a href="#internships">实习</a></li>
+      <li><a href="#skills">技能</a></li>
+      <li><a href="#contact">联系</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section id="hero">
+  <div class="container">
+    <div class="avatar">龙</div>
+    <h1>龙<span>QY</span></h1>
+    <p class="subtitle">嵌入式系统工程师 · 电子信息工程 2026 届</p>
+    <div class="tags">
+      <span>嵌入式Linux</span><span>STM32</span><span>PCB设计</span><span>C/C++</span><span>Python</span>
+    </div>
+  </div>
+</section>
+
+<!-- About -->
+<section id="about">
+  <div class="container">
+    <div class="section-label">基本信息</div>
+    <h2 class="section-title">关于我</h2>
+    <div class="info-grid">
+      <div class="info-item"><span class="label">姓名</span><span class="value">龙QY</span></div>
+      <div class="info-item"><span class="label">性别</span><span class="value">男</span></div>
+      <div class="info-item"><span class="label">出生日期</span><span class="value">2003.11.21</span></div>
+      <div class="info-item"><span class="label">籍贯</span><span class="value">湖北省襄阳市</span></div>
+      <div class="info-item"><span class="label">生源地</span><span class="value">湖北省谷城县</span></div>
+      <div class="info-item"><span class="label">民族</span><span class="value">汉族</span></div>
+      <div class="info-item"><span class="label">政治面貌</span><span class="value">群众</span></div>
+      <div class="info-item"><span class="label">专业排名</span><span class="value">前 10%</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Education -->
+<section id="education">
+  <div class="container">
+    <div class="section-label">教育背景</div>
+    <h2 class="section-title">学历</h2>
+    <div class="edu-block">
+      <div class="period">2022.09 — 2026.07</div>
+      <div class="school">曲靖师范学院</div>
+      <div class="detail">物理与电子工程学院 · 电子信息工程 · 成绩排名前 10%</div>
+      <p style="margin-top:12px;font-size:14px;color:var(--text-dim);">
+        主修：通信原理、程序设计、电子电路设计工艺、硬件描述语言、机器人智能控制基础、数字信号处理、高频电子线路、ARM单片机原理及应用、数据结构与算法、教育机器人技术、Linux应用开发程序基础、Matlab程序设计、信号与系统、单片机原理及应用
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Projects -->
+<section id="projects">
+  <div class="container">
+    <div class="section-label">项目经历</div>
+    <h2 class="section-title">项目</h2>
+    <div class="projects-list">
+
+      <div class="card project-card">
+        <div class="proj-header">
+          <div class="proj-name">基于ESP8266与多传感器的智能硬件控制板设计</div>
+          <div class="proj-role">嵌入式硬件工程师</div>
+        </div>
+        <div class="proj-period">2024.02 — 2024.05</div>
+        <div class="proj-desc">
+          使用嘉立创EDA独立完成系统硬件原理图设计与双层PCB板Layout。硬件方案集成ESP8266 WiFi通讯模块、蓝牙模块、MPU6050六轴姿态传感器及舵机控制接口。合理规划元件摆放与信号流向，科学划分数字电源区域，完成双层板走线网络连接。在导师指导下完成电气连接检查、网络表生成与DRC设计规则校验，确保硬件底层设计的可靠性与可制造性。
+        </div>
+        <div class="proj-tech">
+          <span>ESP8266</span><span>MPU6050</span><span>蓝牙</span><span>嘉立创EDA</span><span>双层PCB</span><span>DRC</span>
+        </div>
+      </div>
+
+      <div class="card project-card">
+        <div class="proj-header">
+          <div class="proj-name">智能机场候机室广播屏幕系统</div>
+          <div class="proj-role">嵌入式软件工程师</div>
+        </div>
+        <div class="proj-period">2025.07 — 2025.11</div>
+        <div class="proj-desc">
+          基于粤嵌GEC-6818嵌入式Linux平台实现航班信息发布系统。直接操作帧缓冲驱动800×480 LCD，采用双缓冲机制消除画面闪烁。集成矢量字体实现逐像素抗锯齿渲染，支持中英文全局切换与状态差异化颜色显示。实现4组航班数据定时轮换、实时时钟及动态消息轮播功能。
+        </div>
+        <div class="proj-tech">
+          <span>GEC-6818</span><span>Linux</span><span>帧缓冲</span><span>双缓冲</span><span>矢量字体</span><span>LCD驱动</span>
+        </div>
+      </div>
+
+      <div class="card project-card">
+        <div class="proj-header">
+          <div class="proj-name">STM32智能车自主导航与循迹控制系统</div>
+          <div class="proj-role">调试工程师</div>
+        </div>
+        <div class="proj-period">2025.03 — 2025.04</div>
+        <div class="proj-desc">
+          基于STM32F103完成电机驱动、红外避障、超声波测距、灰度循迹等多模块嵌入式系统集成。主导系统联调，通过示波器观测PWM波形解决电机启动电流冲击问题。优化时序控制降低超声波干扰，PID参数整定解决转向过冲，增加环形缓冲区避免串口丢包，重配中断优先级解决系统卡顿。
+        </div>
+        <div class="proj-tech">
+          <span>STM32F103</span><span>PID</span><span>PWM</span><span>红外避障</span><span>超声波</span><span>环形缓冲区</span>
+        </div>
+      </div>
+
+      <div class="card project-card">
+        <div class="proj-header">
+          <div class="proj-name">商业显示屏集中控制软件设计</div>
+          <div class="proj-role">嵌入式软件工程师</div>
+        </div>
+        <div class="proj-period">2025.07 — 2025.11</div>
+        <div class="proj-desc">
+          基于GEC6818平台构建图形显示、人机交互、传感器控制、网络通信于一体的智能终端系统。实现BMP图片解析与渲染，应用内存映射+双缓冲技术优化显示。移植嵌入式Web服务器，集成云端语音识别API。通过内存池管理修复内存泄漏，提升系统长期运行稳定性。
+        </div>
+        <div class="proj-tech">
+          <span>GEC6818</span><span>BMP渲染</span><span>内存映射</span><span>Web服务器</span><span>语音识别API</span><span>内存池</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Internships -->
+<section id="internships">
+  <div class="container">
+    <div class="section-label">实习经历</div>
+    <h2 class="section-title">实习</h2>
+    <div class="timeline">
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="tl-period">2025.07 — 2025.12</div>
+          <div class="tl-org">广州粤嵌通信科技股份有限公司</div>
+          <div class="tl-role">研发部实习生</div>
+          <div class="tl-desc">
+            搭建嵌入式Linux开发环境，配置交叉编译工具链，独立完成软件模块编码与调试，参与图形显示与人机交互开发。协助硬件外设驱动验证，实现功能扩展与系统性能优化；配合测试完成功能测试，撰写系统设计文档及用户手册。期间完成《智能机场候机室广播屏幕系统》与《商业显示屏集中控制软件设计》两个个人项目。
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="tl-period">2025.03 — 2025.05</div>
+          <div class="tl-org">华清远见教育科技集团</div>
+          <div class="tl-role">研发部实习生</div>
+          <div class="tl-desc">
+            基于STM32进行底层驱动开发，完成智能小车硬件驱动编写与功能验证，实现传感器数据采集与运动控制算法。参与传感器数据融合及系统集成，编写技术文档与测试报告；优化小车循迹及避障性能。团队项目《STM32驱动小车的运动》，担任调试工程师。
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="tl-period">2024.07 — 2024.09</div>
+          <div class="tl-org">湖北省谷城县自然资源和规划局</div>
+          <div class="tl-role">文档管理实习生</div>
+          <div class="tl-desc">
+            负责档案数字化建设与文件分类整理，完成纸质文件电子化扫描与信息录入。协助文件借阅登记、行政事务处理，清理核对历史文件，提升科室档案完整性。
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Skills -->
+<section id="skills">
+  <div class="container">
+    <div class="section-label">技能</div>
+    <h2 class="section-title">专业技能</h2>
+    <div class="skills-grid">
+      <div class="skill-cat">
+        <h3>编程语言</h3>
+        <div class="chips">
+          <span class="chip">C</span><span class="chip">C++</span><span class="chip">Python</span><span class="chip">Matlab</span>
+        </div>
+      </div>
+      <div class="skill-cat">
+        <h3>嵌入式平台</h3>
+        <div class="chips">
+          <span class="chip">STM32</span><span class="chip">ESP8266</span><span class="chip">ARM</span><span class="chip">GEC6818</span>
+        </div>
+      </div>
+      <div class="skill-cat">
+        <h3>系统 & 工具</h3>
+        <div class="chips">
+          <span class="chip">Linux</span><span class="chip">交叉编译</span><span class="chip">帧缓冲</span><span class="chip">Shell</span>
+        </div>
+      </div>
+      <div class="skill-cat">
+        <h3>硬件设计</h3>
+        <div class="chips">
+          <span class="chip">嘉立创EDA</span><span class="chip">Altium Designer</span><span class="chip">PCB Layout</span><span class="chip">DRC</span>
+        </div>
+      </div>
+      <div class="skill-cat">
+        <h3>其他工具</h3>
+        <div class="chips">
+          <span class="chip">Photoshop</span><span class="chip">Office</span><span class="chip">示波器</span><span class="chip">Blender</span>
+        </div>
+      </div>
+      <div class="skill-cat">
+        <h3>个人兴趣</h3>
+        <div class="chips">
+          <span class="chip">硬件DIY</span><span class="chip">手柄主板</span><span class="chip">Blender建模</span><span class="chip">开源项目</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Awards -->
+<section id="awards">
+  <div class="container">
+    <div class="section-label">荣誉</div>
+    <h2 class="section-title">获奖 & 证书</h2>
+    <div class="awards-grid">
+      <div class="award-item">
+        <div class="award-level">校级</div>
+        <div class="award-name">中国大学生创新大赛</div>
+        <div class="award-date">2024.07.11</div>
+      </div>
+      <div class="award-item">
+        <div class="award-level">省级</div>
+        <div class="award-name">网络创业证书</div>
+        <div class="award-date">2025.11.04</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">云南省人力资源和社会保障厅</div>
+      </div>
+      <div class="award-item">
+        <div class="award-level">企业级</div>
+        <div class="award-name">实习单位书面表扬</div>
+        <div class="award-date">2026.03.25</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">广州粤嵌通信科技股份有限公司</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Contact -->
+<section id="contact">
+  <div class="container">
+    <div class="section-label">联系</div>
+    <h2 class="section-title">联系方式</h2>
+    <div class="contact-links">
+      <div class="contact-item">
+        <div class="icon">✉</div>
+        <span>3042449437@qq.com</span>
+      </div>
+      <div class="contact-item">
+        <div class="icon">📱</div>
+        <span>19****7479</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  &copy; 2026 龙QY · 曲靖师范学院 电子信息工程
+</footer>
+
+<script>
+  // Smooth scroll offset for sticky nav
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const id = a.getAttribute('href');
+      const el = document.querySelector(id);
+      if (el) {
+        window.scrollTo({ top: el.offsetTop - 64, behavior: 'smooth' });
+      }
+    });
+  });
+
+  // Fade in sections on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.style.opacity = '1';
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('section').forEach(s => {
+    s.style.opacity = '0';
+    s.style.transition = 'opacity 0.5s ease';
+    observer.observe(s);
+  });
+  // Show hero immediately
+  document.querySelector('#hero').style.opacity = '1';
+</script>
+
+</body>
+</html>
