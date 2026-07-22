@@ -837,7 +837,10 @@
 
     </div>
 
-      <div style="position:absolute;bottom:28px;left:28px;font-size:15px;color:var(--neon-yellow);letter-spacing:2px;line-height:2;pointer-events:none;text-shadow:0 0 10px var(--neon-yellow-dim),0 0 25px rgba(252,238,10,0.3);animation:neonFlicker 3s infinite;">
+      <div style="margin-top:28px;opacity:0;transform:translateY(10px);transition:all 0.6s cubic-bezier(0.22,1,0.36,1);" id="hero-quote">
+      <span style="font-size:15px;color:var(--neon-yellow);letter-spacing:1px;text-shadow:0 0 10px var(--neon-yellow-dim),0 0 20px rgba(252,238,10,0.2);">应届生的经验确实不如社招，尽管如此我也希望和贵司一起努力</span>
+    </div>
+    <div style="position:absolute;bottom:28px;left:28px;font-size:15px;color:var(--neon-yellow);letter-spacing:2px;line-height:2;pointer-events:none;text-shadow:0 0 10px var(--neon-yellow-dim),0 0 25px rgba(252,238,10,0.3);animation:neonFlicker 3s infinite;">
       <span>> 使用PC访问本网站效果更佳</span><br>
       <span>> 本网站自带BGM</span>
     </div>
@@ -888,7 +891,7 @@
 
         <div class="info-item"><span class="label">ID::EMAIL</span><span class="value"><a href="javascript:void(0)" onclick="navigator.clipboard.writeText('3042449437').then(()=>{const t=document.createElement('div');t.textContent='已复制QQ号';t.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.9);color:#fcee0a;padding:14px 28px;font-size:16px;letter-spacing:2px;z-index:9999;border:1px solid #fcee0a;text-shadow:0 0 10px rgba(252,238,10,0.6);animation:fadeOut 2s forwards;pointer-events:none;';document.body.appendChild(t);setTimeout(()=>t.remove(),2000)}).catch(()=>{prompt('手动复制:','3042449437')})" style="color:var(--text);text-decoration:none;border-bottom:1px dashed var(--neon-cyan);cursor:pointer;" title="点击复制QQ号">3042449437@qq.com</a><br><span style="font-size:11px;color:var(--neon-cyan);letter-spacing:1px;">点击邮箱，复制QQ号</span></span></div>
 
-        <div class="info-item"><span class="label">ID::COMM</span><span class="value">191****7479</span></div>
+        <div class="info-item"><span class="label">ID::COMM</span><span class="value"><a href="javascript:void(0)" onclick="navigator.clipboard.writeText('Gotohitorii').then(()=>{const t=document.createElement('div');t.textContent='已复制微信号';t.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.9);color:#fcee0a;padding:14px 28px;font-size:16px;letter-spacing:2px;z-index:9999;border:1px solid #fcee0a;text-shadow:0 0 10px rgba(252,238,10,0.6);animation:fadeOut 2s forwards;pointer-events:none;';document.body.appendChild(t);setTimeout(()=>t.remove(),2000)}).catch(()=>{prompt('手动复制:','Gotohitorii')})" style="color:var(--text);text-decoration:none;border-bottom:1px dashed var(--neon-cyan);cursor:pointer;" title="点击复制微信号">191****7479</a><br><span style="font-size:11px;color:var(--neon-cyan);letter-spacing:1px;">点击手机号，复制微信号</span></span></div>
 
       </div>
 
@@ -1512,11 +1515,20 @@ function goToPage(targetIdx) {
     oldPage.style.opacity = '';
 
     newPage.style.transition = 'none';
-
     currentPage = targetIdx;
 
     setActiveUI(currentPage);
 
+
+    if (targetIdx === 0) {
+      setTimeout(() => {
+        const q = document.getElementById('hero-quote');
+        if (q) { q.style.opacity = '1'; q.style.transform = 'translateY(0)'; }
+      }, 500);
+    } else {
+      const q = document.getElementById('hero-quote');
+      if (q) { q.style.opacity = '0'; q.style.transform = 'translateY(10px)'; }
+    }
     isTransitioning = false;
 
   }, 700);
@@ -1618,6 +1630,17 @@ function startBGM() {
 
 bgm.volume = 0.35;
 startBGM();
+
+setTimeout(() => {
+  const q = document.getElementById('hero-quote');
+  if (q) { q.style.opacity = '1'; q.style.transform = 'translateY(0)'; }
+}, 800);
+
+// Trigger hero quote on initial load
+setTimeout(() => {
+  const quote = document.getElementById('hero-quote');
+  if (quote) { quote.style.opacity = '1'; quote.style.transform = 'translateY(0)'; }
+}, 800);
 
 // Retry on first user interaction if blocked
 ['click', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
