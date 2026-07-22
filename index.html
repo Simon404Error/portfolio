@@ -24,22 +24,15 @@
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  html {
-    scroll-behavior: auto;
-    scroll-snap-type: y mandatory;
-    overflow-y: scroll;
-    scrollbar-width: none;
-  }
-  html::-webkit-scrollbar { display: none; }
-
-  body {
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
     font-family: 'Share Tech Mono', 'Courier New', 'PingFang SC', 'Microsoft YaHei', monospace;
     background: var(--bg); color: var(--text); line-height: 1.75;
-    -webkit-font-smoothing: antialiased; overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
     cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18'><circle cx='9' cy='9' r='3' fill='%23fcee0a' opacity='0.85'/><circle cx='9' cy='9' r='8' fill='none' stroke='%23fcee0a' stroke-width='0.5' opacity='0.4'/></svg>") 9 9, crosshair;
   }
 
-  /* ============ BG CANVAS ============ */
+  /* ============ BG ============ */
   #bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
   .scanlines {
     position: fixed; inset: 0; z-index: 1; pointer-events: none;
@@ -47,12 +40,25 @@
   }
   .vignette {
     position: fixed; inset: 0; z-index: 1; pointer-events: none;
-    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.55) 100%);
+  }
+
+  /* ============ TRANSITION OVERLAY ============ */
+  #transition-overlay {
+    position: fixed; inset: 0; z-index: 300; pointer-events: none;
+    background: transparent; transition: background 0.15s;
+  }
+  #transition-overlay.active { background: rgba(252,238,10,0.08); }
+  #glitch-bars {
+    position: fixed; inset: 0; z-index: 301; pointer-events: none; opacity: 0;
+  }
+  #transition-particles {
+    position: fixed; inset: 0; z-index: 302; pointer-events: none;
   }
 
   /* ============ NAV ============ */
   nav {
-    position: fixed; top: 0; z-index: 100; width: 100%; height: var(--nav-h);
+    position: fixed; top: 0; z-index: 200; width: 100%; height: var(--nav-h);
     background: rgba(6,6,10,0.9); backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(252,238,10,0.08);
     display: flex; align-items: center; justify-content: center;
@@ -74,7 +80,7 @@
   nav .nav-links a {
     color: var(--text-dim); text-decoration: none; font-size: 13px;
     letter-spacing: 1.5px; text-transform: uppercase; transition: all 0.3s;
-    position: relative; padding: 4px 0;
+    position: relative; padding: 4px 0; cursor: pointer;
   }
   nav .nav-links a::before {
     content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 1px;
@@ -82,31 +88,26 @@
   }
   nav .nav-links a:hover { color: var(--neon-yellow); text-shadow: 0 0 10px var(--neon-yellow-dim); }
   nav .nav-links a:hover::before { width: 100%; }
+  nav .nav-links a.active { color: var(--neon-yellow); }
+  nav .nav-links a.active::before { width: 100%; }
 
-  /* ============ PAGE DOTS ============ */
-  .page-dots {
-    position: fixed; right: 22px; top: 50%; transform: translateY(-50%);
-    z-index: 200; display: flex; flex-direction: column; gap: 14px;
-  }
-  .page-dots .dot {
-    width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.4s;
-    position: relative;
-  }
-  .page-dots .dot:hover { background: rgba(252,238,10,0.5); border-color: var(--neon-yellow); }
-  .page-dots .dot.active {
-    background: var(--neon-yellow); border-color: var(--neon-yellow);
-    box-shadow: 0 0 14px var(--neon-yellow-dim), 0 0 28px rgba(252,238,10,0.3);
-    transform: scale(1.3);
+  /* ============ PAGE CONTAINER ============ */
+  #page-stage {
+    position: fixed; inset: 0; z-index: 10;
+    overflow: hidden; perspective: 1200px;
   }
 
-  /* ============ SECTIONS (FULL PAGE) ============ */
+  /* ============ PAGES ============ */
   .page {
-    position: relative; z-index: 2; min-height: 100vh; width: 100%;
+    position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
     padding: 80px 28px 80px 28px;
-    scroll-snap-align: start; scroll-snap-stop: always;
+    opacity: 0; pointer-events: none;
+    transition: none; /* JS handles animation */
+    will-change: transform, opacity;
+    overflow-y: auto;
   }
+  .page.active { opacity: 1; pointer-events: all; z-index: 10; }
   .page-inner { width: 100%; max-width: var(--max-w); }
 
   .section-label {
@@ -129,10 +130,9 @@
 
   /* ============ PAGE 0: HERO ============ */
   #page-hero { text-align: center; }
-  #page-hero .glitch-wrapper { position: relative; display: inline-block; }
   #page-hero .hero-name {
     font-size: 110px; font-weight: 900; color: var(--neon-yellow);
-    letter-spacing: 14px; line-height: 1;
+    letter-spacing: 14px; line-height: 1; position: relative; display: inline-block;
     text-shadow:
       0 0 20px var(--neon-yellow),
       0 0 40px var(--neon-yellow-dim),
@@ -140,38 +140,31 @@
       0 0 120px rgba(252,238,10,0.2),
       0 0 200px rgba(252,238,10,0.1);
     animation: neonFlicker 3s infinite;
-    position: relative;
   }
   @keyframes neonFlicker {
     0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
     20%, 24%, 55% { opacity: 0.85; }
   }
-  /* Glitch clone layers */
   #page-hero .hero-name::before,
   #page-hero .hero-name::after {
-    content: 'LQY';
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    color: var(--neon-yellow); font-size: 110px; font-weight: 900; letter-spacing: 14px;
-    line-height: 1; opacity: 0;
+    content: 'LQY'; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    font-size: 110px; font-weight: 900; letter-spacing: 14px; line-height: 1; opacity: 0;
   }
   #page-hero .hero-name::before {
-    animation: glitchRed 4s infinite;
-    color: #ff0055; text-shadow: 0 0 10px #ff0055;
+    animation: glitchR 4s infinite; color: #ff0055; text-shadow: 0 0 10px #ff0055;
   }
   #page-hero .hero-name::after {
-    animation: glitchCyan 4s infinite;
-    color: #00f0ff; text-shadow: 0 0 10px #00f0ff;
+    animation: glitchC 4s infinite; color: #00f0ff; text-shadow: 0 0 10px #00f0ff;
   }
-  @keyframes glitchRed {
-    0%, 93%, 96%, 100% { opacity: 0; transform: translate(0); }
-    94% { opacity: 0.7; transform: translate(-5px, 2px); clip-path: polygon(0 20%, 100% 20%, 100% 35%, 0 35%); }
-    95% { opacity: 0.6; transform: translate(4px, -1px); clip-path: polygon(0 65%, 100% 65%, 100% 80%, 0 80%); }
+  @keyframes glitchR {
+    0%,93%,96%,100%{opacity:0;transform:translate(0)}
+    94%{opacity:.7;transform:translate(-5px,2px);clip-path:polygon(0 20%,100% 20%,100% 35%,0 35%)}
+    95%{opacity:.6;transform:translate(4px,-1px);clip-path:polygon(0 65%,100% 65%,100% 80%,0 80%)}
   }
-  @keyframes glitchCyan {
-    0%, 93%, 96%, 100% { opacity: 0; transform: translate(0); }
-    95% { opacity: 0.7; transform: translate(3px, -2px); clip-path: polygon(0 40%, 100% 40%, 100% 55%, 0 55%); }
+  @keyframes glitchC {
+    0%,93%,96%,100%{opacity:0;transform:translate(0)}
+    95%{opacity:.7;transform:translate(3px,-2px);clip-path:polygon(0 40%,100% 40%,100% 55%,0 55%)}
   }
-
   #page-hero .subtitle {
     font-size: 18px; color: var(--text-dim); margin-top: 16px; letter-spacing: 2px;
   }
@@ -194,7 +187,7 @@
   }
   .scroll-hint span { font-size: 11px; color: var(--text-dim); letter-spacing: 2px; }
   .scroll-hint .arrow { font-size: 20px; color: var(--neon-yellow); opacity: 0.6; }
-  @keyframes bounceHint { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-8px); } }
+  @keyframes bounceHint { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-8px)} }
 
   /* ============ CARDS ============ */
   .card {
@@ -234,7 +227,7 @@
 
   .projects-list { display: flex; flex-direction: column; gap: 28px; }
   .project-card .proj-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; }
-  .project-card .proj-name { font-size: 18px; font-weight: 700; color: var(--text-bright); letter-spacing: 0.5px; }
+  .project-card .proj-name { font-size: 18px; font-weight: 700; color: var(--text-bright); }
   .project-card .proj-role {
     font-size: 12px; background: rgba(252,238,10,0.08); color: var(--neon-yellow);
     padding: 4px 14px; letter-spacing: 1.5px; white-space: nowrap;
@@ -275,7 +268,7 @@
     text-shadow: 0 0 10px var(--neon-yellow-dim);
     animation: blink 2s step-end infinite;
   }
-  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
   .skill-cat .chips { display: flex; flex-wrap: wrap; gap: 10px; }
   .skill-cat .chip {
     background: rgba(252,238,10,0.04); color: var(--text); padding: 5px 16px;
@@ -308,7 +301,7 @@
 
   .oss-item {
     display: flex; gap: 20px; padding: 20px 0; border-bottom: 1px solid rgba(26,26,46,0.3);
-    align-items: flex-start; transition: all 0.3s;
+    align-items: flex-start;
   }
   .oss-item:last-child { border-bottom: none; }
   .oss-item .oss-icon {
@@ -329,33 +322,26 @@
   }
 
   footer {
-    position: relative; z-index: 2; text-align: center; padding: 40px 20px;
-    font-size: 13px; color: var(--text-dim); letter-spacing: 2px;
-    border-top: 1px solid rgba(26,26,46,0.3);
-  }
-  footer::before {
-    content: ''; display: block; width: 64px; height: 1px; margin: 0 auto 18px;
-    background: var(--neon-yellow); opacity: 0.4;
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; text-align: center;
+    padding: 18px 20px; font-size: 11px; color: rgba(110,110,136,0.5); letter-spacing: 2px;
+    pointer-events: none;
   }
 
-  /* ============ SECTION ENTRANCE ANIMATIONS ============ */
-  .entrance-item {
-    opacity: 0; transform: translateY(40px); filter: blur(4px);
-    transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  /* ============ PAGE DOTS ============ */
+  .page-dots {
+    position: fixed; right: 22px; top: 50%; transform: translateY(-50%); z-index: 200;
+    display: flex; flex-direction: column; gap: 14px;
   }
-  .entrance-item.visible { opacity: 1; transform: translateY(0); filter: blur(0); }
-  .entrance-item:nth-child(1) { transition-delay: 0s; }
-  .entrance-item:nth-child(2) { transition-delay: 0.08s; }
-  .entrance-item:nth-child(3) { transition-delay: 0.16s; }
-  .entrance-item:nth-child(4) { transition-delay: 0.24s; }
-  .entrance-item:nth-child(5) { transition-delay: 0.32s; }
-  .entrance-item:nth-child(6) { transition-delay: 0.4s; }
-
-  .entrance-stagger {
-    opacity: 0; transform: translateX(-30px);
-    transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  .page-dots .dot {
+    width: 8px; height: 8px; background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.08); cursor: pointer; transition: all 0.4s;
   }
-  .entrance-stagger.visible { opacity: 1; transform: translateX(0); }
+  .page-dots .dot:hover { background: rgba(252,238,10,0.5); }
+  .page-dots .dot.active {
+    background: var(--neon-yellow); border-color: var(--neon-yellow);
+    box-shadow: 0 0 14px var(--neon-yellow-dim), 0 0 28px rgba(252,238,10,0.3);
+    transform: scale(1.4);
+  }
 
   /* ============ AUDIO ============ */
   #audio-ctrl {
@@ -376,22 +362,20 @@
   #audio-ctrl .eq span:nth-child(3) { height: 7px; animation-delay: 0.3s; }
   #audio-ctrl .eq span:nth-child(4) { height: 12px; animation-delay: 0.45s; }
   #audio-ctrl .eq.paused span { animation-play-state: paused; opacity: 0.25; }
-  @keyframes eqAnim { 0%,100% { transform: scaleY(0.35); } 50% { transform: scaleY(1); } }
+  @keyframes eqAnim { 0%,100%{transform:scaleY(0.35)} 50%{transform:scaleY(1)} }
   #audio-ctrl .track-name {
     font-size: 11px; color: var(--text-dim); letter-spacing: 1px;
     max-width: 150px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
   }
 
-  /* ============ RESPONSIVE ============ */
   @media (max-width: 768px) {
     nav .nav-links { display: none; }
-    .page-dots { display: none; }
+    .page-dots { right: 10px; gap: 10px; }
     #page-hero .hero-name { font-size: 64px; letter-spacing: 8px; }
     #page-hero .hero-name::before,
     #page-hero .hero-name::after { font-size: 64px; letter-spacing: 8px; }
     .section-title { font-size: 30px; }
     .info-grid { grid-template-columns: 1fr 1fr; }
-    .timeline-item { gap: 18px; }
     .page { padding: 64px 16px; }
   }
 </style>
@@ -400,252 +384,228 @@
 <canvas id="bg-canvas"></canvas>
 <div class="scanlines"></div>
 <div class="vignette"></div>
+<div id="transition-overlay"></div>
+<canvas id="transition-particles"></canvas>
 
 <nav>
   <div class="nav-inner">
     <div class="logo">LQY</div>
-    <ul class="nav-links">
-      <li><a href="#page-hero">// HOME</a></li>
-      <li><a href="#page-projects">// PROJECTS</a></li>
-      <li><a href="#page-history">// HISTORY</a></li>
-      <li><a href="#page-skills">// MATRIX</a></li>
-      <li><a href="#page-awards">// ACHIEVE</a></li>
-      <li><a href="#page-contact">// COMMS</a></li>
+    <ul class="nav-links" id="nav-links">
+      <li><a data-page="0" class="active">// HOME</a></li>
+      <li><a data-page="1">// ABOUT</a></li>
+      <li><a data-page="2">// PROJECTS</a></li>
+      <li><a data-page="3">// HISTORY</a></li>
+      <li><a data-page="4">// MATRIX</a></li>
+      <li><a data-page="5">// ACHIEVE</a></li>
+      <li><a data-page="6">// COMMS</a></li>
     </ul>
   </div>
 </nav>
 
-<div class="page-dots" id="page-dots">
-  <div class="dot active" data-target="page-hero"></div>
-  <div class="dot" data-target="page-about"></div>
-  <div class="dot" data-target="page-projects"></div>
-  <div class="dot" data-target="page-history"></div>
-  <div class="dot" data-target="page-skills"></div>
-  <div class="dot" data-target="page-awards"></div>
-  <div class="dot" data-target="page-contact"></div>
+<div class="page-dots" id="page-dots"></div>
+
+<div id="page-stage">
+
+  <!-- PAGE 0: HERO -->
+  <section class="page active" id="page-hero" data-index="0">
+    <div class="page-inner">
+      <div class="hero-name">LQY</div>
+      <p class="subtitle">&gt; 嵌入式系统工程师 _ 电子信息工程 2026 届 _ 专业排名前 10%</p>
+      <div class="deco-line"></div>
+      <div class="tags">
+        <span>嵌入式 Linux</span><span>STM32</span><span>PCB 设计</span><span>C/C++</span><span>Python</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 1: ABOUT -->
+  <section class="page" id="page-about" data-index="1">
+    <div class="page-inner">
+      <div class="section-label">// 身份识别</div>
+      <h2 class="section-title">SYS.INFO</h2>
+      <div class="info-grid">
+        <div class="info-item"><span class="label">ID::NAME</span><span class="value">龙QY</span></div>
+        <div class="info-item"><span class="label">ID::GENDER</span><span class="value">男</span></div>
+        <div class="info-item"><span class="label">ID::BIRTH</span><span class="value">2003.11.21</span></div>
+        <div class="info-item"><span class="label">ID::ORIGIN</span><span class="value">湖北省襄阳市谷城县</span></div>
+        <div class="info-item"><span class="label">ID::ETHNIC</span><span class="value">汉族</span></div>
+        <div class="info-item"><span class="label">ID::RANK</span><span class="value">前 10%</span></div>
+        <div class="info-item"><span class="label">ID::EMAIL</span><span class="value">3042449437@qq.com</span></div>
+        <div class="info-item"><span class="label">ID::COMM</span><span class="value">191****7479</span></div>
+      </div>
+      <div style="margin-top:56px;">
+        <div class="edu-block">
+          <div class="period">[ 2022.09 — 2026.07 ]</div>
+          <div class="school">曲靖师范学院</div>
+          <div class="detail">物理与电子工程学院 · 电子信息工程 本科 · 校内排名前 10%</div>
+          <p style="margin-top:16px;font-size:14px;color:var(--text-dim);line-height:1.9;">
+            主修课程：通信原理 / 程序设计 / 电子电路设计工艺 / 硬件描述语言 / 机器人智能控制基础 / 数字信号处理 / 高频电子线路 / ARM单片机原理及应用 / 数据结构与算法 / 教育机器人技术 / Linux应用开发程序基础 / Matlab程序设计 / 信号与系统 / 单片机原理及应用
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 2: PROJECTS -->
+  <section class="page" id="page-projects" data-index="2">
+    <div class="page-inner">
+      <div class="section-label">// 核心项目</div>
+      <h2 class="section-title">PROJECTS</h2>
+      <div class="projects-list">
+        <div class="card project-card">
+          <div class="proj-header"><div class="proj-name">[HW-001] 基于ESP8266与多传感器的智能硬件控制板设计</div><div class="proj-role">硬件工程师</div></div>
+          <div class="proj-period">2024.02 — 2024.05 · 导师指导项目</div>
+          <div class="proj-desc">使用嘉立创EDA独立完成系统硬件原理图设计与双层PCB板Layout。集成ESP8266 WiFi通讯模块、蓝牙模块、MPU6050六轴姿态传感器及舵机控制接口。完成电气连接检查、网络表生成与DRC设计规则校验。</div>
+          <div class="proj-tech"><span>ESP8266</span><span>MPU6050</span><span>蓝牙</span><span>嘉立创EDA</span><span>双层PCB</span><span>DRC</span></div>
+        </div>
+        <div class="card project-card">
+          <div class="proj-header"><div class="proj-name">[SW-001] 智能机场候机室广播屏幕系统</div><div class="proj-role">嵌入式软件工程师</div></div>
+          <div class="proj-period">2025.07 — 2025.11 · GEC-6818 (S5P6818)</div>
+          <div class="proj-desc">直接操作帧缓冲驱动800×480 LCD，双缓冲机制消除画面闪烁，无第三方GUI框架。矢量字体逐像素抗锯齿，中英文全局切换与状态差异化颜色显示。4组航班数据定时轮换、实时时钟及动态消息轮播。</div>
+          <div class="proj-tech"><span>GEC-6818</span><span>Linux</span><span>帧缓冲</span><span>双缓冲</span><span>矢量字体</span><span>LCD</span></div>
+        </div>
+        <div class="card project-card">
+          <div class="proj-header"><div class="proj-name">[DBG-001] STM32智能车自主导航与循迹控制系统</div><div class="proj-role">调试工程师</div></div>
+          <div class="proj-period">2025.03 — 2025.04 · STM32F103</div>
+          <div class="proj-desc">多模块嵌入式系统集成。示波器观测PWM波形解决电机启动电流冲击，优化时序控制降低超声波干扰，PID参数整定解决转向过冲，环形缓冲区避免串口丢包，重配中断优先级解决系统卡顿。</div>
+          <div class="proj-tech"><span>STM32F103</span><span>PID</span><span>PWM</span><span>红外避障</span><span>超声波</span><span>环形缓冲</span></div>
+        </div>
+        <div class="card project-card">
+          <div class="proj-header"><div class="proj-name">[SW-002] 商业显示屏集中控制软件设计</div><div class="proj-role">嵌入式软件工程师</div></div>
+          <div class="proj-period">2025.07 — 2025.11 · GEC-6818 平台</div>
+          <div class="proj-desc">图形显示、人机交互、传感器控制、网络通信于一体。BMP图片解析与渲染，内存映射+双缓冲技术优化显示。移植嵌入式Web服务器，集成云端语音识别API。内存池管理修复内存泄漏。</div>
+          <div class="proj-tech"><span>GEC6818</span><span>BMP渲染</span><span>内存映射</span><span>Web服务器</span><span>语音API</span><span>内存池</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 3: HISTORY -->
+  <section class="page" id="page-history" data-index="3">
+    <div class="page-inner">
+      <div class="section-label">// 履历追踪</div>
+      <h2 class="section-title">HISTORY.LOG</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="tl-period">[ 2025.07 — 2025.12 ]</div>
+            <div class="tl-org">广州粤嵌通信科技股份有限公司</div>
+            <div class="tl-role">&gt; 研发部实习生 _ 云南曲靖</div>
+            <div class="tl-desc">搭建嵌入式Linux开发环境，配置交叉编译工具链，独立完成软件模块编码与调试。期间完成<strong>《智能机场候机室广播屏幕系统》</strong>与<strong>《商业显示屏集中控制软件设计》</strong>两个个人项目。</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="tl-period">[ 2025.03 — 2025.05 ]</div>
+            <div class="tl-org">华清远见教育科技集团</div>
+            <div class="tl-role">&gt; 研发部实习生 _ 云南曲靖</div>
+            <div class="tl-desc">基于STM32进行底层驱动开发，完成智能小车硬件驱动编写与功能验证。团队项目<strong>《STM32驱动小车的运动》</strong>，担任调试工程师。</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="tl-period">[ 2024.07 — 2024.09 ]</div>
+            <div class="tl-org">湖北省谷城县自然资源和规划局</div>
+            <div class="tl-role">&gt; 文档管理实习生 _ 湖北襄阳</div>
+            <div class="tl-desc">负责档案数字化建设与文件分类整理，完成纸质文件电子化扫描与信息录入。</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:44px;">
+        <div class="card">
+          <div style="font-size:17px;font-weight:700;color:var(--text-bright);margin-bottom:4px;">[CAMPUS] 大学生棋弈协会 · 成员</div>
+          <div style="font-size:12px;color:var(--neon-cyan);margin-bottom:8px;letter-spacing:1px;">2023.04 — 2024.05</div>
+          <div style="font-size:15px;color:var(--text-dim);">课余时间参与棋艺交流，锻炼逻辑思维与专注力。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 4: SKILLS + OSS -->
+  <section class="page" id="page-skills" data-index="4">
+    <div class="page-inner">
+      <div class="section-label">// 能力矩阵</div>
+      <h2 class="section-title">SKILL_MATRIX</h2>
+      <div class="skills-grid">
+        <div class="skill-cat"><h3>LANGUAGE</h3><div class="chips"><span class="chip">C</span><span class="chip">C++</span><span class="chip">Python</span><span class="chip">Matlab</span></div></div>
+        <div class="skill-cat"><h3>EMBEDDED</h3><div class="chips"><span class="chip">STM32</span><span class="chip">ESP8266</span><span class="chip">ARM</span><span class="chip">S5P6818</span></div></div>
+        <div class="skill-cat"><h3>LINUX</h3><div class="chips"><span class="chip">交叉编译</span><span class="chip">帧缓冲</span><span class="chip">系统编程</span><span class="chip">Shell</span></div></div>
+        <div class="skill-cat"><h3>HARDWARE</h3><div class="chips"><span class="chip">嘉立创EDA</span><span class="chip">原理图</span><span class="chip">PCB Layout</span><span class="chip">DRC</span></div></div>
+        <div class="skill-cat"><h3>TOOLS</h3><div class="chips"><span class="chip">PS</span><span class="chip">Office</span><span class="chip">示波器</span><span class="chip">Blender</span></div></div>
+        <div class="skill-cat"><h3>MODS</h3><div class="chips"><span class="chip">硬件DIY</span><span class="chip">手柄改装</span><span class="chip">开源社区</span><span class="chip">MAD剪辑</span></div></div>
+      </div>
+      <div style="margin-top:40px;">
+        <div class="section-label">// 开源贡献</div>
+        <div class="card" style="padding:6px 0;">
+          <div class="oss-item" style="padding:20px 30px;">
+            <div class="oss-icon">🐛</div>
+            <div><div class="oss-name">[OSS] MAA 图像识别 — Bug 复现与维护</div><div class="oss-period">2022.10 — 2025.05</div><div class="oss-desc">参与知名开源自动化助手项目的图像识别模块维护，负责Bug复现、问题定位与修复验证。</div></div>
+          </div>
+          <div class="oss-item" style="padding:20px 30px;">
+            <div class="oss-icon">🤖</div>
+            <div><div class="oss-name">[OSS] Auto Sign Job 自动签到工具</div><div class="oss-period">2025.12 — NOW</div><div class="oss-desc">复刻项目，设计定时运行签到脚本，实现自动化任务调度，持续维护中。</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 5: AWARDS -->
+  <section class="page" id="page-awards" data-index="5">
+    <div class="page-inner">
+      <div class="section-label">// 成就解锁</div>
+      <h2 class="section-title">ACHIEVE.SYS</h2>
+      <div class="awards-grid">
+        <div class="award-item">
+          <div class="award-level">◆ 企业级</div>
+          <div class="award-name">实习单位书面表扬</div>
+          <div class="award-date">2026.03.25</div>
+          <div class="award-detail">广州粤嵌通信科技股份有限公司</div>
+        </div>
+        <div class="award-item">
+          <div class="award-level">◆ 校级</div>
+          <div class="award-name">中国大学生创新大赛（2024）</div>
+          <div class="award-date">2024.07.11</div>
+          <div class="award-detail">曲靖师范学院校赛 · 铜奖</div>
+        </div>
+        <div class="award-item">
+          <div class="award-level">◆ 省级</div>
+          <div class="award-name">网络创业证书</div>
+          <div class="award-date">2025.11.04</div>
+          <div class="award-detail">编号 430340202509WLC00064 · 云南省人力资源和社会保障厅</div>
+        </div>
+      </div>
+      <div style="margin-top:44px;">
+        <div class="card" style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+          <div style="font-size:48px;">📄</div>
+          <div style="flex:1;min-width:200px;">
+            <div style="font-size:18px;font-weight:700;color:var(--text-bright);">[FILE] 仿真设计文件</div>
+            <div style="font-size:14px;color:var(--text-dim);margin-top:4px;">嘉立创EDA · 原理图 & PCB布局 · 双层板 · ESP8266 + 多传感器</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 6: CONTACT -->
+  <section class="page" id="page-contact" data-index="6">
+    <div class="page-inner">
+      <div class="section-label">// 建立通讯</div>
+      <h2 class="section-title">COMM_LINK</h2>
+      <div class="contact-links">
+        <div class="contact-item"><div class="icon">✉</div><span>3042449437@qq.com</span></div>
+        <div class="contact-item"><div class="icon">📱</div><span>191****7479</span></div>
+        <div class="contact-item"><div class="icon">📍</div><span>湖北省襄阳市谷城县</span></div>
+      </div>
+    </div>
+  </section>
+
 </div>
 
-<!-- ==================== PAGE 0: HERO ==================== -->
-<section class="page" id="page-hero">
-  <div class="page-inner">
-    <div class="glitch-wrapper">
-      <div class="hero-name" data-text="LQY">LQY</div>
-    </div>
-    <p class="subtitle">&gt; 嵌入式系统工程师 _ 电子信息工程 2026 届 _ 专业排名前 10%</p>
-    <div class="deco-line"></div>
-    <div class="tags">
-      <span>嵌入式 Linux</span><span>STM32</span><span>PCB 设计</span><span>C/C++</span><span>Python</span>
-    </div>
-    <div class="scroll-hint">
-      <span>SCROLL</span><div class="arrow">▼</div>
-    </div>
-  </div>
-</section>
-
-<!-- ==================== PAGE 1: ABOUT ==================== -->
-<section class="page" id="page-about">
-  <div class="page-inner">
-    <div class="section-label entrance-item">// 身份识别</div>
-    <h2 class="section-title entrance-item">SYS.INFO</h2>
-    <div class="info-grid entrance-item">
-      <div class="info-item"><span class="label">ID::NAME</span><span class="value">龙QY</span></div>
-      <div class="info-item"><span class="label">ID::GENDER</span><span class="value">男</span></div>
-      <div class="info-item"><span class="label">ID::BIRTH</span><span class="value">2003.11.21</span></div>
-      <div class="info-item"><span class="label">ID::ORIGIN</span><span class="value">湖北省襄阳市谷城县</span></div>
-      <div class="info-item"><span class="label">ID::ETHNIC</span><span class="value">汉族</span></div>
-      <div class="info-item"><span class="label">ID::RANK</span><span class="value">前 10%</span></div>
-      <div class="info-item"><span class="label">ID::EMAIL</span><span class="value">3042449437@qq.com</span></div>
-      <div class="info-item"><span class="label">ID::COMM</span><span class="value">191****7479</span></div>
-    </div>
-    <div style="margin-top:56px;" class="entrance-stagger">
-      <div class="edu-block">
-        <div class="period">[ 2022.09 — 2026.07 ]</div>
-        <div class="school">曲靖师范学院</div>
-        <div class="detail">物理与电子工程学院 · 电子信息工程 本科 · 校内排名前 10%</div>
-        <p style="margin-top:16px;font-size:14px;color:var(--text-dim);line-height:1.9;">
-          主修课程：通信原理 / 程序设计 / 电子电路设计工艺 / 硬件描述语言 / 机器人智能控制基础 / 数字信号处理 / 高频电子线路 / ARM单片机原理及应用 / 数据结构与算法 / 教育机器人技术 / Linux应用开发程序基础 / Matlab程序设计 / 信号与系统 / 单片机原理及应用
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ==================== PAGE 2: PROJECTS ==================== -->
-<section class="page" id="page-projects">
-  <div class="page-inner">
-    <div class="section-label entrance-item">// 核心项目</div>
-    <h2 class="section-title entrance-item">PROJECTS</h2>
-    <div class="projects-list">
-      <div class="card project-card entrance-item">
-        <div class="proj-header"><div class="proj-name">[HW-001] 基于ESP8266与多传感器的智能硬件控制板设计</div><div class="proj-role">硬件工程师</div></div>
-        <div class="proj-period">2024.02 — 2024.05 · 导师指导项目</div>
-        <div class="proj-desc">使用嘉立创EDA独立完成系统硬件原理图设计与双层PCB板Layout。集成ESP8266 WiFi通讯模块、蓝牙模块、MPU6050六轴姿态传感器及舵机控制接口。完成电气连接检查、网络表生成与DRC设计规则校验。</div>
-        <div class="proj-tech"><span>ESP8266</span><span>MPU6050</span><span>蓝牙</span><span>嘉立创EDA</span><span>双层PCB</span><span>DRC</span></div>
-      </div>
-      <div class="card project-card entrance-item">
-        <div class="proj-header"><div class="proj-name">[SW-001] 智能机场候机室广播屏幕系统</div><div class="proj-role">嵌入式软件工程师</div></div>
-        <div class="proj-period">2025.07 — 2025.11 · GEC-6818 (S5P6818)</div>
-        <div class="proj-desc">直接操作帧缓冲驱动800×480 LCD，双缓冲机制消除画面闪烁，无第三方GUI框架。矢量字体逐像素抗锯齿，中英文全局切换与状态差异化颜色显示。4组航班数据定时轮换、实时时钟及动态消息轮播。</div>
-        <div class="proj-tech"><span>GEC-6818</span><span>Linux</span><span>帧缓冲</span><span>双缓冲</span><span>矢量字体</span><span>LCD</span></div>
-      </div>
-      <div class="card project-card entrance-item">
-        <div class="proj-header"><div class="proj-name">[DBG-001] STM32智能车自主导航与循迹控制系统</div><div class="proj-role">调试工程师</div></div>
-        <div class="proj-period">2025.03 — 2025.04 · STM32F103</div>
-        <div class="proj-desc">多模块嵌入式系统集成。示波器观测PWM波形解决电机启动电流冲击，优化时序控制降低超声波干扰，PID参数整定解决转向过冲，环形缓冲区避免串口丢包，重配中断优先级解决系统卡顿。</div>
-        <div class="proj-tech"><span>STM32F103</span><span>PID</span><span>PWM</span><span>红外避障</span><span>超声波</span><span>环形缓冲</span></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ==================== PAGE 3: PROJECTS CONT'D + OSS ==================== -->
-<section class="page" id="page-projects-2">
-  <div class="page-inner">
-    <div class="projects-list" style="margin-bottom:40px;">
-      <div class="card project-card entrance-item">
-        <div class="proj-header"><div class="proj-name">[SW-002] 商业显示屏集中控制软件设计</div><div class="proj-role">嵌入式软件工程师</div></div>
-        <div class="proj-period">2025.07 — 2025.11 · GEC-6818 平台</div>
-        <div class="proj-desc">图形显示、人机交互、传感器控制、网络通信于一体。BMP图片解析与渲染，内存映射+双缓冲技术优化显示。移植嵌入式Web服务器，集成云端语音识别API。内存池管理修复内存泄漏。</div>
-        <div class="proj-tech"><span>GEC6818</span><span>BMP渲染</span><span>内存映射</span><span>Web服务器</span><span>语音API</span><span>内存池</span></div>
-      </div>
-    </div>
-    <div style="margin-top:40px;">
-      <div class="section-label entrance-item">// 开源贡献</div>
-      <div class="card entrance-item" style="padding:6px 0;">
-        <div class="oss-item" style="padding:20px 30px;">
-          <div class="oss-icon">🐛</div>
-          <div>
-            <div class="oss-name">[OSS] MAA 图像识别 — Bug 复现与维护</div>
-            <div class="oss-period">2022.10 — 2025.05</div>
-            <div class="oss-desc">参与知名开源自动化助手项目的图像识别模块维护，负责Bug复现、问题定位与修复验证。</div>
-          </div>
-        </div>
-        <div class="oss-item" style="padding:20px 30px;">
-          <div class="oss-icon">🤖</div>
-          <div>
-            <div class="oss-name">[OSS] Auto Sign Job 自动签到工具</div>
-            <div class="oss-period">2025.12 — NOW</div>
-            <div class="oss-desc">复刻项目，设计定时运行签到脚本，实现自动化任务调度，持续维护中。</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ==================== PAGE 4: HISTORY ==================== -->
-<section class="page" id="page-history">
-  <div class="page-inner">
-    <div class="section-label entrance-item">// 履历追踪</div>
-    <h2 class="section-title entrance-item">HISTORY.LOG</h2>
-    <div class="timeline">
-      <div class="timeline-item entrance-stagger">
-        <div class="timeline-dot"></div>
-        <div class="timeline-content">
-          <div class="tl-period">[ 2025.07 — 2025.12 ]</div>
-          <div class="tl-org">广州粤嵌通信科技股份有限公司</div>
-          <div class="tl-role">&gt; 研发部实习生 _ 云南曲靖</div>
-          <div class="tl-desc">搭建嵌入式Linux开发环境，配置交叉编译工具链，独立完成软件模块编码与调试。期间完成<strong>《智能机场候机室广播屏幕系统》</strong>与<strong>《商业显示屏集中控制软件设计》</strong>两个个人项目。</div>
-        </div>
-      </div>
-      <div class="timeline-item entrance-stagger">
-        <div class="timeline-dot"></div>
-        <div class="timeline-content">
-          <div class="tl-period">[ 2025.03 — 2025.05 ]</div>
-          <div class="tl-org">华清远见教育科技集团</div>
-          <div class="tl-role">&gt; 研发部实习生 _ 云南曲靖</div>
-          <div class="tl-desc">基于STM32进行底层驱动开发，完成智能小车硬件驱动编写与功能验证。团队项目<strong>《STM32驱动小车的运动》</strong>，担任调试工程师。</div>
-        </div>
-      </div>
-      <div class="timeline-item entrance-stagger">
-        <div class="timeline-dot"></div>
-        <div class="timeline-content">
-          <div class="tl-period">[ 2024.07 — 2024.09 ]</div>
-          <div class="tl-org">湖北省谷城县自然资源和规划局</div>
-          <div class="tl-role">&gt; 文档管理实习生 _ 湖北襄阳</div>
-          <div class="tl-desc">负责档案数字化建设与文件分类整理，完成纸质文件电子化扫描与信息录入。</div>
-        </div>
-      </div>
-    </div>
-    <div style="margin-top:44px;" class="entrance-stagger">
-      <div class="card">
-        <div style="font-size:17px;font-weight:700;color:var(--text-bright);margin-bottom:4px;">[CAMPUS] 大学生棋弈协会 · 成员</div>
-        <div style="font-size:12px;color:var(--neon-cyan);margin-bottom:8px;letter-spacing:1px;">2023.04 — 2024.05</div>
-        <div style="font-size:15px;color:var(--text-dim);">课余时间参与棋艺交流，锻炼逻辑思维与专注力。</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ==================== PAGE 5: SKILLS ==================== -->
-<section class="page" id="page-skills">
-  <div class="page-inner">
-    <div class="section-label entrance-item">// 能力矩阵</div>
-    <h2 class="section-title entrance-item">SKILL_MATRIX</h2>
-    <div class="skills-grid">
-      <div class="skill-cat entrance-item"><h3>LANGUAGE</h3><div class="chips"><span class="chip">C</span><span class="chip">C++</span><span class="chip">Python</span><span class="chip">Matlab</span></div></div>
-      <div class="skill-cat entrance-item"><h3>EMBEDDED</h3><div class="chips"><span class="chip">STM32</span><span class="chip">ESP8266</span><span class="chip">ARM</span><span class="chip">S5P6818</span></div></div>
-      <div class="skill-cat entrance-item"><h3>LINUX</h3><div class="chips"><span class="chip">交叉编译</span><span class="chip">帧缓冲</span><span class="chip">系统编程</span><span class="chip">Shell</span></div></div>
-      <div class="skill-cat entrance-item"><h3>HARDWARE</h3><div class="chips"><span class="chip">嘉立创EDA</span><span class="chip">原理图</span><span class="chip">PCB Layout</span><span class="chip">DRC</span></div></div>
-      <div class="skill-cat entrance-item"><h3>TOOLS</h3><div class="chips"><span class="chip">PS</span><span class="chip">Office</span><span class="chip">示波器</span><span class="chip">Blender</span></div></div>
-      <div class="skill-cat entrance-item"><h3>MODS</h3><div class="chips"><span class="chip">硬件DIY</span><span class="chip">手柄改装</span><span class="chip">开源社区</span><span class="chip">MAD剪辑</span></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ==================== PAGE 6: AWARDS ==================== -->
-<section class="page" id="page-awards">
-  <div class="page-inner">
-    <div class="section-label entrance-item">// 成就解锁</div>
-    <h2 class="section-title entrance-item">ACHIEVE.SYS</h2>
-    <div class="awards-grid">
-      <div class="award-item entrance-item">
-        <div class="award-level">◆ 企业级</div>
-        <div class="award-name">实习单位书面表扬</div>
-        <div class="award-date">2026.03.25</div>
-        <div class="award-detail">广州粤嵌通信科技股份有限公司</div>
-      </div>
-      <div class="award-item entrance-item">
-        <div class="award-level">◆ 校级</div>
-        <div class="award-name">中国大学生创新大赛（2024）</div>
-        <div class="award-date">2024.07.11</div>
-        <div class="award-detail">曲靖师范学院校赛 · 铜奖</div>
-      </div>
-      <div class="award-item entrance-item">
-        <div class="award-level">◆ 省级</div>
-        <div class="award-name">网络创业证书</div>
-        <div class="award-date">2025.11.04</div>
-        <div class="award-detail">编号 430340202509WLC00064 · 云南省人力资源和社会保障厅</div>
-      </div>
-    </div>
-    <div style="margin-top:44px;" class="entrance-stagger">
-      <div class="card" style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
-        <div style="font-size:48px;">📄</div>
-        <div style="flex:1;min-width:200px;">
-          <div style="font-size:18px;font-weight:700;color:var(--text-bright);">[FILE] 仿真设计文件</div>
-          <div style="font-size:14px;color:var(--text-dim);margin-top:4px;">嘉立创EDA · 原理图 & PCB布局 · 双层板 · ESP8266 + 多传感器</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ==================== PAGE 7: CONTACT ==================== -->
-<section class="page" id="page-contact">
-  <div class="page-inner">
-    <div class="section-label entrance-item">// 建立通讯</div>
-    <h2 class="section-title entrance-item">COMM_LINK</h2>
-    <div class="contact-links entrance-item">
-      <div class="contact-item"><div class="icon">✉</div><span>3042449437@qq.com</span></div>
-      <div class="contact-item"><div class="icon">📱</div><span>191****7479</span></div>
-      <div class="contact-item"><div class="icon">📍</div><span>湖北省襄阳市谷城县</span></div>
-    </div>
-  </div>
-</section>
-
-<footer>
-  © 2026 龙QY · 曲靖师范学院 物理与电子工程学院 · 电子信息工程
-</footer>
+<footer>© 2026 龙QY · 曲靖师范学院 物理与电子工程学院 · 电子信息工程</footer>
 
 <div id="audio-ctrl" title="I Really Want to Stay at Your House">
   <div class="eq" id="eq-bars"><span></span><span></span><span></span><span></span></div>
@@ -657,18 +617,13 @@
 </audio>
 
 <script>
-// ============ CYBERPUNK BACKGROUND ============
+// ============ BACKGROUND ============
 (() => {
   const c = document.getElementById('bg-canvas');
   const ctx = c.getContext('2d');
-  let W, H, particles, mouse = { x: -1000, y: -1000 }, t = 0;
+  let W, H, particles, mouse = { x: -1000, y: -1000 };
 
-  function resize() {
-    W = c.width = window.innerWidth;
-    H = c.height = window.innerHeight;
-    initParticles();
-  }
-
+  function resize() { W = c.width = window.innerWidth; H = c.height = window.innerHeight; initParticles(); }
   function initParticles() {
     const count = Math.floor(W * H / 8000);
     particles = [];
@@ -676,20 +631,14 @@
       particles.push({
         x: Math.random() * W, y: Math.random() * H,
         vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5,
-        r: Math.random() * 1.5 + 0.4,
-        a: Math.random() * 0.6 + 0.15,
+        r: Math.random() * 1.5 + 0.4, a: Math.random() * 0.6 + 0.15,
         color: Math.random() < 0.65 ? '252,238,10' : '0,240,255'
       });
     }
   }
-
   function draw() {
     ctx.clearRect(0, 0, W, H);
-    t += 0.004;
-
-    // Hex grid
-    ctx.strokeStyle = 'rgba(252,238,10,0.022)';
-    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = 'rgba(252,238,10,0.022)'; ctx.lineWidth = 0.5;
     const hs = 42, vs = hs * Math.sqrt(3);
     for (let row = -1; row < H / vs + 2; row++) {
       const offset = (row % 2) * hs / 2;
@@ -697,121 +646,226 @@
         const x = col * hs + offset, y = row * vs * 0.75;
         ctx.beginPath();
         for (let i = 0; i < 6; i++) {
-          const angle = Math.PI / 3 * i - Math.PI / 6;
-          const px = x + 19 * Math.cos(angle), py = y + 19 * Math.sin(angle);
+          const a = Math.PI / 3 * i - Math.PI / 6;
+          const px = x + 19 * Math.cos(a), py = y + 19 * Math.sin(a);
           i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
         }
         ctx.closePath(); ctx.stroke();
       }
     }
-
     for (const p of particles) {
       p.x += p.vx; p.y += p.vy;
       if (p.x < -30) p.x = W + 30; if (p.x > W + 30) p.x = -30;
       if (p.y < -30) p.y = H + 30; if (p.y > H + 30) p.y = -30;
-
       ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(${p.color},${p.a})`; ctx.fill();
-
       if (p.color === '252,238,10') {
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 2.8, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${p.color},${p.a * 0.12})`; ctx.fill();
       }
-
       const mdx = p.x - mouse.x, mdy = p.y - mouse.y;
       const md = Math.sqrt(mdx * mdx + mdy * mdy);
       if (md < 200) {
         ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, mouse.y);
-        ctx.strokeStyle = `rgba(252,238,10,${0.05 * (1 - md / 200)})`;
-        ctx.lineWidth = 0.5; ctx.stroke();
+        ctx.strokeStyle = `rgba(252,238,10,${0.05 * (1 - md / 200)})`; ctx.lineWidth = 0.5; ctx.stroke();
       }
     }
-
     requestAnimationFrame(draw);
   }
-
   window.addEventListener('resize', resize);
   window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
   resize(); draw();
 })();
 
-// ============ FULL-PAGE SCROLL & DOTS ============
-const pages = document.querySelectorAll('.page');
-const dots = document.querySelectorAll('#page-dots .dot');
-const pageIds = Array.from(pages).map(p => p.id);
+// ============ PAGE CONTROLLER ============
+const pages = Array.from(document.querySelectorAll('.page'));
+const navLinks = document.querySelectorAll('#nav-links a');
+const dotsContainer = document.getElementById('page-dots');
+const overlay = document.getElementById('transition-overlay');
+const particleCanvas = document.getElementById('transition-particles');
+const particleCtx = particleCanvas.getContext('2d');
+particleCanvas.width = window.innerWidth;
+particleCanvas.height = window.innerHeight;
 
-function updateActiveDot() {
-  const scrollCenter = window.scrollY + window.innerHeight / 2;
-  let closestIdx = 0, closestDist = Infinity;
-  pages.forEach((p, i) => {
-    const top = p.offsetTop, bottom = top + p.offsetHeight;
-    const center = (top + bottom) / 2;
-    const dist = Math.abs(scrollCenter - center);
-    if (dist < closestDist) { closestDist = dist; closestIdx = i; }
-  });
-  dots.forEach((d, i) => d.classList.toggle('active', i === closestIdx));
+let currentPage = 0;
+let isTransitioning = false;
+const totalPages = pages.length;
+
+// Create dots
+for (let i = 0; i < totalPages; i++) {
+  const dot = document.createElement('div');
+  dot.className = 'dot' + (i === 0 ? ' active' : '');
+  dot.addEventListener('click', () => goToPage(i));
+  dotsContainer.appendChild(dot);
+}
+const dots = document.querySelectorAll('#page-dots .dot');
+
+function setActiveUI(idx) {
+  navLinks.forEach((a, i) => a.classList.toggle('active', i === idx));
+  dots.forEach((d, i) => d.classList.toggle('active', i === idx));
 }
 
-dots.forEach(dot => {
-  dot.addEventListener('click', () => {
-    const targetId = dot.dataset.target;
-    const target = document.getElementById(targetId);
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth' });
+// ============ TRANSITION EFFECTS ============
+function burstParticles(x, y, count) {
+  const ctx = particleCtx;
+  const w = window.innerWidth, h = window.innerHeight;
+  const particles = [];
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 8 + 2;
+    particles.push({
+      x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+      life: 1, decay: Math.random() * 0.03 + 0.015,
+      r: Math.random() * 3 + 1,
+      color: Math.random() < 0.7 ? '252,238,10' : '0,240,255'
+    });
+  }
+  function animate() {
+    ctx.clearRect(0, 0, w, h);
+    let alive = false;
+    for (const p of particles) {
+      p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+      if (p.life > 0) {
+        alive = true;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${p.color},${p.life * 0.8})`; ctx.fill();
+      }
     }
-  });
+    if (alive) requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+}
+
+function glitchFlash(duration) {
+  overlay.classList.add('active');
+  burstParticles(window.innerWidth / 2, window.innerHeight / 2, 40);
+  setTimeout(() => overlay.classList.remove('active'), duration);
+}
+
+// ============ PAGE TRANSITIONS ============
+function goToPage(targetIdx) {
+  if (isTransitioning || targetIdx === currentPage || targetIdx < 0 || targetIdx >= totalPages) return;
+  isTransitioning = true;
+
+  const oldPage = pages[currentPage];
+  const newPage = pages[targetIdx];
+  const direction = targetIdx > currentPage ? 1 : -1;
+  const dist = Math.abs(targetIdx - currentPage);
+
+  // Pick transition style based on direction and distance
+  let exitAnim, enterAnim;
+  const r = Math.random();
+
+  if (r < 0.33) {
+    // SLIDE: old slides out opposite direction, new slides in
+    exitAnim = { transform: `translateX(${-direction * 120}px)`, opacity: 0, filter: 'blur(6px)' };
+    enterAnim = { transform: `translateX(${direction * 120}px)`, opacity: 0, filter: 'blur(6px)' };
+    newPage.style.transform = `translateX(${direction * 120}px)`;
+    newPage.style.filter = 'blur(6px)';
+    newPage.style.opacity = '0';
+  } else if (r < 0.66) {
+    // ZOOM: old zooms out, new zooms in
+    exitAnim = { transform: 'scale(0.85)', opacity: 0, filter: 'blur(8px)' };
+    enterAnim = { transform: 'scale(1.15)', opacity: 0, filter: 'blur(8px)' };
+    newPage.style.transform = 'scale(1.15)';
+    newPage.style.filter = 'blur(8px)';
+    newPage.style.opacity = '0';
+  } else {
+    // 3D FLIP: slight rotation effect
+    exitAnim = { transform: `rotateY(${direction * 15}deg) scale(0.9)`, opacity: 0, filter: 'blur(4px)' };
+    enterAnim = { transform: `rotateY(${-direction * 15}deg) scale(0.9)`, opacity: 0, filter: 'blur(4px)' };
+    newPage.style.transform = `rotateY(${-direction * 15}deg) scale(0.9)`;
+    newPage.style.filter = 'blur(4px)';
+    newPage.style.opacity = '0';
+  }
+
+  // Show new page
+  newPage.classList.add('active');
+
+  // Glitch flash
+  glitchFlash(180);
+
+  // Animate old page out
+  oldPage.style.transition = 'all 0.55s cubic-bezier(0.4, 0, 0.2, 1)';
+  Object.assign(oldPage.style, exitAnim);
+
+  // Animate new page in (small delay)
+  setTimeout(() => {
+    newPage.style.transition = 'all 0.55s cubic-bezier(0.22, 0.61, 0.36, 1)';
+    newPage.style.transform = '';
+    newPage.style.filter = '';
+    newPage.style.opacity = '';
+  }, 120);
+
+  // Cleanup
+  setTimeout(() => {
+    oldPage.classList.remove('active');
+    oldPage.style.transition = 'none';
+    oldPage.style.transform = '';
+    oldPage.style.filter = '';
+    oldPage.style.opacity = '';
+    newPage.style.transition = 'none';
+    currentPage = targetIdx;
+    setActiveUI(currentPage);
+    isTransitioning = false;
+  }, 700);
+}
+
+// ============ WHEEL HANDLER ============
+let wheelAccum = 0;
+let wheelTimeout;
+window.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (isTransitioning) return;
+  wheelAccum += e.deltaY;
+  clearTimeout(wheelTimeout);
+  wheelTimeout = setTimeout(() => {
+    if (wheelAccum > 50) goToPage(currentPage + 1);
+    else if (wheelAccum < -50) goToPage(currentPage - 1);
+    wheelAccum = 0;
+  }, 80);
+}, { passive: false });
+
+// ============ KEYBOARD ============
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); goToPage(currentPage + 1); }
+  if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); goToPage(currentPage - 1); }
 });
 
-window.addEventListener('scroll', updateActiveDot, { passive: true });
-updateActiveDot();
+// Touch swipe
+let touchStartY = 0;
+window.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; });
+window.addEventListener('touchend', e => {
+  const dy = touchStartY - e.changedTouches[0].clientY;
+  if (Math.abs(dy) > 50) goToPage(currentPage + (dy > 0 ? 1 : -1));
+});
 
-// ============ ENTRANCE ANIMATIONS ============
-(() => {
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.classList.add('visible');
-      }
-    });
-  }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
-
-  document.querySelectorAll('.entrance-item, .entrance-stagger')
-    .forEach(el => observer.observe(el));
-})();
+// ============ NAV CLICKS ============
+navLinks.forEach(a => {
+  a.addEventListener('click', () => {
+    const idx = parseInt(a.dataset.page);
+    goToPage(idx);
+  });
+});
 
 // ============ BGM ============
 const bgm = document.getElementById('bgm');
 const audioCtrl = document.getElementById('audio-ctrl');
 const eqBars = document.getElementById('eq-bars');
 let playing = false;
-
 audioCtrl.addEventListener('click', () => {
-  if (playing) {
-    bgm.pause(); eqBars.classList.add('paused'); playing = false;
-  } else {
-    bgm.play().catch(() => {}); eqBars.classList.remove('paused'); playing = true;
-  }
+  if (playing) { bgm.pause(); eqBars.classList.add('paused'); playing = false; }
+  else { bgm.play().catch(() => {}); eqBars.classList.remove('paused'); playing = true; }
 });
-
-let autoPlayAttempted = false;
+let ap = false;
 document.addEventListener('click', () => {
-  if (!autoPlayAttempted) {
-    bgm.play().then(() => {
-      playing = true; eqBars.classList.remove('paused');
-    }).catch(() => {});
-    autoPlayAttempted = true;
-  }
+  if (!ap) { bgm.play().then(() => { playing = true; eqBars.classList.remove('paused'); }).catch(() => {}); ap = true; }
 }, { once: true });
-
 bgm.volume = 0.35;
 
-// ============ NAV CLICK SCROLL ============
-document.querySelectorAll('a[href^="#"]').forEach(a => {
-  a.addEventListener('click', e => {
-    e.preventDefault();
-    const el = document.querySelector(a.getAttribute('href'));
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-  });
+window.addEventListener('resize', () => {
+  particleCanvas.width = window.innerWidth;
+  particleCanvas.height = window.innerHeight;
 });
 </script>
 </body>
