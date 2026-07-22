@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -51,6 +51,9 @@
   #transition-overlay.active { background: rgba(252,238,10,0.08); }
   #glitch-bars {
     position: fixed; inset: 0; z-index: 301; pointer-events: none; opacity: 0;
+  }
+  #transition-particles {
+    position: fixed; inset: 0; z-index: 302; pointer-events: none;
   }
 
   /* ============ NAV ============ */
@@ -382,6 +385,7 @@
 <div class="scanlines"></div>
 <div class="vignette"></div>
 <div id="transition-overlay"></div>
+<canvas id="transition-particles"></canvas>
 
 <nav>
   <div class="nav-inner">
@@ -585,7 +589,7 @@
     </div>
   </section>
 
-
+  
 </div>
 
 <footer>© 2026 龙QY · 曲靖师范学院 物理与电子工程学院 · 电子信息工程</footer>
@@ -665,8 +669,10 @@ const pages = Array.from(document.querySelectorAll('.page'));
 const navLinks = document.querySelectorAll('#nav-links a');
 const dotsContainer = document.getElementById('page-dots');
 const overlay = document.getElementById('transition-overlay');
-const particleCanvas = null;
-const particleCtx = null;
+const particleCanvas = document.getElementById('transition-particles');
+const particleCtx = particleCanvas.getContext('2d');
+particleCanvas.width = window.innerWidth;
+particleCanvas.height = window.innerHeight;
 
 let currentPage = 0;
 let isTransitioning = false;
@@ -816,7 +822,10 @@ document.addEventListener('click', () => {
 }, { once: true });
 bgm.volume = 0.35;
 
-
+window.addEventListener('resize', () => {
+  particleCanvas.width = window.innerWidth;
+  particleCanvas.height = window.innerHeight;
+});
 </script>
 </body>
 </html>
