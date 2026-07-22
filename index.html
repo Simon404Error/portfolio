@@ -1191,7 +1191,7 @@
 
 
 
-<audio id="bgm" loop preload="auto" autoplay>
+<audio id="bgm" loop preload="auto" autoplay playsinline>
 
   <source src="bgm.webm" type="audio/webm">
 
@@ -1624,14 +1624,30 @@ const eqBars = document.getElementById('eq-bars');
 let playing = false;
 
 function startBGM() {
+  bgm.volume = 0.35;
   bgm.play().then(() => {
     playing = true;
     eqBars.classList.remove('paused');
   }).catch(() => {});
 }
 
-bgm.volume = 0.35;
+// Aggressive autoplay: try immediately + on every possible trigger
 startBGM();
+window.addEventListener('DOMContentLoaded', startBGM);
+window.addEventListener('load', startBGM);
+
+// If browser blocked, retry on first human signal
+const forcePlay = () => {
+  if (!playing) {
+    startBGM();
+    ['click','keydown','scroll','touchstart','mousemove'].forEach(e => {
+      document.removeEventListener(e, forcePlay);
+    });
+  }
+};
+['click','keydown','scroll','touchstart','mousemove'].forEach(e => {
+  document.addEventListener(e, forcePlay, { once: false });
+});
 
 setTimeout(() => {
   const q = document.getElementById('hero-quote');
