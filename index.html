@@ -1191,7 +1191,7 @@
 
 
 
-<audio id="bgm" loop preload="auto" autoplay playsinline>
+<audio id="bgm" loop preload="auto" playsinline>
 
   <source src="bgm.webm" type="audio/webm">
 
@@ -1614,52 +1614,63 @@ navLinks.forEach(a => {
 
 
 // ============ BGM ============
+(function() {
+  var a = document.getElementById('bgm');
+  var ctrl = document.getElementById('audio-ctrl');
+  var eq = document.getElementById('eq-bars');
+  var playing = false;
 
-const bgm = document.getElementById('bgm');
-const audioCtrl = document.getElementById('audio-ctrl');
-const eqBars = document.getElementById('eq-bars');
-let playing = false;
+  function onPlay() {
+    if (!playing) { playing = true; eq.classList.remove('paused'); }
+  }
 
-function startBGM() {
-  if (playing) return;
-  bgm.volume = 0;
-  bgm.muted = true;
-  bgm.play().then(() => {
-    playing = true;
-    eqBars.classList.remove('paused');
-    // Fade volume from 0 to 0.35 over 2 seconds
-    let vol = 0;
-    bgm.muted = false;
-    const fade = setInterval(() => {
-      vol += 0.02;
-      if (vol >= 0.35) { vol = 0.35; clearInterval(fade); }
-      bgm.volume = vol;
-    }, 100);
-  }).catch(() => {});
-}
+  // Remove from DOM and use Web Audio approach
+  var ctx = null;
+  try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
 
-// Try immediately on load
-bgm.volume = 0;
-bgm.muted = true;
-bgm.play().then(() => {
-  playing = true;
-  eqBars.classList.remove('paused');
-  bgm.muted = false;
-  let vol = 0;
-  const fade = setInterval(() => {
-    vol += 0.02;
-    if (vol >= 0.35) { vol = 0.35; clearInterval(fade); }
-    bgm.volume = vol;
-  }, 100);
-}).catch(() => {
-  // If initial play fails, retry on any interaction
-  const unlock = () => {
-    if (!playing) startBGM();
-  };
-  ['click','keydown','scroll','touchstart','mousemove','pointerdown'].forEach(e => {
-    document.addEventListener(e, unlock, { once: true });
+  function tryPlay() {
+    // Method 1: Direct element muted
+    a.muted = true;
+    a.volume = 0;
+    var p = a.play();
+    if (p) p.then(function() {
+      if (!playing) { a.muted = false; onPlay(); var v=0; var t=setInterval(function(){v+=0.02;if(v>=0.35){v=0.35;clearInterval(t)}a.volume=v},100); }
+    }).catch(function(){});
+    // Method 2: AudioContext (more permissive)
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().then(function() {
+        if (!playing) { a.muted = false; onPlay(); a.volume = 0; a.play().catch(function(){}); var v=0; var t=setInterval(function(){v+=0.02;if(v>=0.35){v=0.35;clearInterval(t)}a.volume=v},100); }
+      }).catch(function(){});
+    }
+  }
+
+  // Fire on every possible early event
+  tryPlay();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tryPlay);
+  }
+  window.addEventListener('load', tryPlay);
+  window.addEventListener('pageshow', tryPlay);
+  window.addEventListener('focus', tryPlay);
+
+  // Last resort: capture first interaction
+  function unlock() {
+    if (!playing) {
+      a.muted = false;
+      a.volume = 0.35;
+      a.play().then(onPlay).catch(function(){});
+    }
+    ['mousedown','touchstart','keydown'].forEach(function(e){ document.removeEventListener(e, unlock); });
+  }
+  ['mousedown','touchstart','keydown'].forEach(function(e){ document.addEventListener(e, unlock); });
+
+  ctrl.addEventListener('click', function() {
+    if (playing) { a.pause(); eq.classList.add('paused'); playing = false; }
+    else { a.muted = false; a.volume = 0.35; a.play().then(onPlay).catch(function(){}); }
   });
-});
+})();
+
+
 
 setTimeout(() => {
   const q = document.getElementById('hero-quote');
