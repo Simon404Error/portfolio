@@ -824,8 +824,8 @@
     <div class="page-inner">
 
           <div style="opacity:0;transform:translateY(10px);transition:all 0.6s cubic-bezier(0.22,1,0.36,1);" id="hero-quote">
-      <div style="font-size:15px;color:var(--neon-yellow);letter-spacing:1px;line-height:2;text-shadow:0 0 10px var(--neon-yellow-dim),0 0 20px rgba(252,238,10,0.2);">应届生的经验确实不如社招</div>
-      <div style="font-size:15px;color:var(--neon-yellow);letter-spacing:1px;text-shadow:0 0 10px var(--neon-yellow-dim),0 0 20px rgba(252,238,10,0.2);margin-bottom:24px;">尽管如此我也希望和贵司一起努力</div>
+      <div style="font-size:16px;color:var(--neon-yellow);letter-spacing:1px;line-height:2;text-shadow:0 0 10px var(--neon-yellow-dim),0 0 20px rgba(252,238,10,0.2);padding-top:60px;">应届生的经验确实不如社招</div>
+      <div style="font-size:16px;color:var(--neon-yellow);letter-spacing:1px;text-shadow:0 0 10px var(--neon-yellow-dim),0 0 20px rgba(252,238,10,0.2);margin-bottom:4px;">尽管如此我也希望和贵司一起努力</div>
     </div>
 
 <div class="hero-name">LQY</div>
@@ -1526,7 +1526,7 @@ function goToPage(targetIdx) {
       setTimeout(() => {
         const q = document.getElementById('hero-quote');
         if (q) { q.style.opacity = '1'; q.style.transform = 'translateY(0)'; }
-      }, 500);
+      }, 200);
     } else {
       const q = document.getElementById('hero-quote');
       if (q) { q.style.opacity = '0'; q.style.transform = 'translateY(10px)'; }
