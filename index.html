@@ -1191,7 +1191,7 @@
 
 
 
-<audio id="bgm" loop preload="auto" playsinline>
+<audio id="bgm" loop preload="auto" autoplay>
 
   <source src="bgm.webm" type="audio/webm">
 
@@ -1614,63 +1614,24 @@ navLinks.forEach(a => {
 
 
 // ============ BGM ============
-(function() {
-  var a = document.getElementById('bgm');
-  var ctrl = document.getElementById('audio-ctrl');
-  var eq = document.getElementById('eq-bars');
-  var playing = false;
 
-  function onPlay() {
-    if (!playing) { playing = true; eq.classList.remove('paused'); }
-  }
+const bgm = document.getElementById('bgm');
 
-  // Remove from DOM and use Web Audio approach
-  var ctx = null;
-  try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+const audioCtrl = document.getElementById('audio-ctrl');
 
-  function tryPlay() {
-    // Method 1: Direct element muted
-    a.muted = true;
-    a.volume = 0;
-    var p = a.play();
-    if (p) p.then(function() {
-      if (!playing) { a.muted = false; onPlay(); var v=0; var t=setInterval(function(){v+=0.02;if(v>=0.35){v=0.35;clearInterval(t)}a.volume=v},100); }
-    }).catch(function(){});
-    // Method 2: AudioContext (more permissive)
-    if (ctx && ctx.state === 'suspended') {
-      ctx.resume().then(function() {
-        if (!playing) { a.muted = false; onPlay(); a.volume = 0; a.play().catch(function(){}); var v=0; var t=setInterval(function(){v+=0.02;if(v>=0.35){v=0.35;clearInterval(t)}a.volume=v},100); }
-      }).catch(function(){});
-    }
-  }
+const eqBars = document.getElementById('eq-bars');
 
-  // Fire on every possible early event
-  tryPlay();
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', tryPlay);
-  }
-  window.addEventListener('load', tryPlay);
-  window.addEventListener('pageshow', tryPlay);
-  window.addEventListener('focus', tryPlay);
+let playing = false;
 
-  // Last resort: capture first interaction
-  function unlock() {
-    if (!playing) {
-      a.muted = false;
-      a.volume = 0.35;
-      a.play().then(onPlay).catch(function(){});
-    }
-    ['mousedown','touchstart','keydown'].forEach(function(e){ document.removeEventListener(e, unlock); });
-  }
-  ['mousedown','touchstart','keydown'].forEach(function(e){ document.addEventListener(e, unlock); });
+function startBGM() {
+  bgm.play().then(() => {
+    playing = true;
+    eqBars.classList.remove('paused');
+  }).catch(() => {});
+}
 
-  ctrl.addEventListener('click', function() {
-    if (playing) { a.pause(); eq.classList.add('paused'); playing = false; }
-    else { a.muted = false; a.volume = 0.35; a.play().then(onPlay).catch(function(){}); }
-  });
-})();
-
-
+bgm.volume = 0.35;
+startBGM();
 
 setTimeout(() => {
   const q = document.getElementById('hero-quote');
