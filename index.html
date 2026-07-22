@@ -52,9 +52,6 @@
   #glitch-bars {
     position: fixed; inset: 0; z-index: 301; pointer-events: none; opacity: 0;
   }
-  #transition-particles {
-    position: fixed; inset: 0; z-index: 302; pointer-events: none;
-  }
 
   /* ============ NAV ============ */
   nav {
@@ -385,7 +382,6 @@
 <div class="scanlines"></div>
 <div class="vignette"></div>
 <div id="transition-overlay"></div>
-<canvas id="transition-particles"></canvas>
 
 <nav>
   <div class="nav-inner">
@@ -397,7 +393,6 @@
       <li><a data-page="3">// HISTORY</a></li>
       <li><a data-page="4">// MATRIX</a></li>
       <li><a data-page="5">// ACHIEVE</a></li>
-      <li><a data-page="6">// COMMS</a></li>
     </ul>
   </div>
 </nav>
@@ -590,18 +585,6 @@
     </div>
   </section>
 
-  <!-- PAGE 6: CONTACT -->
-  <section class="page" id="page-contact" data-index="6">
-    <div class="page-inner">
-      <div class="section-label">// 建立通讯</div>
-      <h2 class="section-title">COMM_LINK</h2>
-      <div class="contact-links">
-        <div class="contact-item"><div class="icon">✉</div><span>3042449437@qq.com</span></div>
-        <div class="contact-item"><div class="icon">📱</div><span>191****7479</span></div>
-        <div class="contact-item"><div class="icon">📍</div><span>湖北省襄阳市谷城县</span></div>
-      </div>
-    </div>
-  </section>
 
 </div>
 
@@ -682,10 +665,8 @@ const pages = Array.from(document.querySelectorAll('.page'));
 const navLinks = document.querySelectorAll('#nav-links a');
 const dotsContainer = document.getElementById('page-dots');
 const overlay = document.getElementById('transition-overlay');
-const particleCanvas = document.getElementById('transition-particles');
-const particleCtx = particleCanvas.getContext('2d');
-particleCanvas.width = window.innerWidth;
-particleCanvas.height = window.innerHeight;
+const particleCanvas = null;
+const particleCtx = null;
 
 let currentPage = 0;
 let isTransitioning = false;
@@ -706,39 +687,11 @@ function setActiveUI(idx) {
 }
 
 // ============ TRANSITION EFFECTS ============
-function burstParticles(x, y, count) {
-  const ctx = particleCtx;
-  const w = window.innerWidth, h = window.innerHeight;
-  const particles = [];
-  for (let i = 0; i < count; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = Math.random() * 8 + 2;
-    particles.push({
-      x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-      life: 1, decay: Math.random() * 0.03 + 0.015,
-      r: Math.random() * 3 + 1,
-      color: Math.random() < 0.7 ? '252,238,10' : '0,240,255'
-    });
-  }
-  function animate() {
-    ctx.clearRect(0, 0, w, h);
-    let alive = false;
-    for (const p of particles) {
-      p.x += p.vx; p.y += p.vy; p.life -= p.decay;
-      if (p.life > 0) {
-        alive = true;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${p.color},${p.life * 0.8})`; ctx.fill();
-      }
-    }
-    if (alive) requestAnimationFrame(animate);
-  }
   requestAnimationFrame(animate);
 }
 
 function glitchFlash(duration) {
   overlay.classList.add('active');
-  burstParticles(window.innerWidth / 2, window.innerHeight / 2, 40);
   setTimeout(() => overlay.classList.remove('active'), duration);
 }
 
@@ -863,10 +816,7 @@ document.addEventListener('click', () => {
 }, { once: true });
 bgm.volume = 0.35;
 
-window.addEventListener('resize', () => {
-  particleCanvas.width = window.innerWidth;
-  particleCanvas.height = window.innerHeight;
-});
+
 </script>
 </body>
 </html>
