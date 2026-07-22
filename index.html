@@ -1184,7 +1184,7 @@
 
 
 
-<audio id="bgm" loop preload="auto">
+<audio id="bgm" loop preload="auto" autoplay>
 
   <source src="bgm.webm" type="audio/webm">
 
@@ -1607,23 +1607,30 @@ const eqBars = document.getElementById('eq-bars');
 
 let playing = false;
 
+function startBGM() {
+  bgm.play().then(() => {
+    playing = true;
+    eqBars.classList.remove('paused');
+  }).catch(() => {});
+}
+
+bgm.volume = 0.35;
+startBGM();
+
+// Retry on first user interaction if blocked
+['click', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+  document.addEventListener(evt, () => {
+    if (!playing) startBGM();
+  }, { once: true });
+});
+
 audioCtrl.addEventListener('click', () => {
 
   if (playing) { bgm.pause(); eqBars.classList.add('paused'); playing = false; }
 
-  else { bgm.play().catch(() => {}); eqBars.classList.remove('paused'); playing = true; }
+  else { startBGM(); }
 
 });
-
-let ap = false;
-
-document.addEventListener('click', () => {
-
-  if (!ap) { bgm.play().then(() => { playing = true; eqBars.classList.remove('paused'); }).catch(() => {}); ap = true; }
-
-}, { once: true });
-
-bgm.volume = 0.35;
 
 
 
