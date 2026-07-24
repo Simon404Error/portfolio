@@ -817,6 +817,27 @@
   }
 
 
+  /* ============ PAGE ARROWS ============ */
+  .page-arrow {
+    position: fixed; top: 50%; transform: translateY(-50%); z-index: 250;
+    width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+    background: rgba(6,6,10,0.75); border: 1px solid rgba(252,238,10,0.2);
+    cursor: pointer; pointer-events: none; opacity: 0; transition: opacity 0.3s;
+    backdrop-filter: blur(6px); user-select: none;
+  }
+  .page-arrow.visible { pointer-events: all; opacity: 1; }
+  .page-arrow:hover { border-color: var(--neon-yellow); box-shadow: 0 0 20px rgba(252,238,10,0.2); }
+  .page-arrow-left { left: 14px; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+  .page-arrow-right { right: 14px; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 100%, 8px 100%); }
+  .page-arrow .arr-symbol {
+    font-size: 20px; color: var(--neon-yellow);
+    text-shadow: 0 0 8px var(--neon-yellow-dim), 0 0 20px rgba(252,238,10,0.3);
+    animation: arrowBlink 1.5s ease-in-out infinite;
+  }
+  @keyframes arrowBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.15; }
+  }
   @media (max-width: 600px) {
     .skills-grid { grid-template-columns: 1fr; }
     .repo-grid { grid-template-columns: 1fr; }
@@ -1283,6 +1304,8 @@
 
 
 
+<div class="page-arrow page-arrow-left" id="arrow-left"><span class="arr-symbol">&#9664;</span></div>
+<div class="page-arrow page-arrow-right" id="arrow-right"><span class="arr-symbol">&#9654;</span></div>
 
 
 <div id="audio-ctrl" title="I Really Want to Stay at Your House">
@@ -1470,6 +1493,15 @@ for (let i = 0; i < totalPages; i++) {
 const dots = document.querySelectorAll('#page-dots .dot');
 
 
+const arrowLeft = document.getElementById('arrow-left');
+const arrowRight = document.getElementById('arrow-right');
+
+function updateArrows() {
+  const show = currentPage === 3 || currentPage === 5;
+  arrowLeft.classList.toggle('visible', show);
+  arrowRight.classList.toggle('visible', show);
+}
+
 
 function setActiveUI(idx) {
 
@@ -1624,6 +1656,7 @@ function goToPage(targetIdx) {
     currentPage = targetIdx;
 
     setActiveUI(currentPage);
+    updateArrows();
 
 
     if (targetIdx === 0) {
@@ -1651,6 +1684,8 @@ let wheelTimeout;
 
 window.addEventListener('wheel', e => {
 
+  // On pages 3 (PROJECTS) and 5 (MATRIX), let wheel scroll content naturally
+  if (currentPage === 3 || currentPage === 5) return;
   e.preventDefault();
 
   if (isTransitioning) return;
@@ -1695,6 +1730,9 @@ window.addEventListener('touchend', e => {
 
   const dy = touchStartY - e.changedTouches[0].clientY;
 
+  if (currentPage === 3 || currentPage === 5) return;
+
+  
   if (Math.abs(dy) > 50) goToPage(currentPage + (dy > 0 ? 1 : -1));
 
 });
@@ -1718,6 +1756,9 @@ navLinks.forEach(a => {
 
 
 // ============ BGM ============
+
+arrowLeft.addEventListener('click', () => { goToPage(currentPage - 1); });
+arrowRight.addEventListener('click', () => { goToPage(currentPage + 1); });
 
 const bgm = document.getElementById('bgm');
 
