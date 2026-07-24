@@ -815,6 +815,16 @@
   }
 
 
+  @media (max-width: 600px) {
+    .skills-grid { grid-template-columns: 1fr; }
+    .repo-grid { grid-template-columns: 1fr; }
+    .awards-grid { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+    .project-card .proj-header { flex-direction: column; align-items: flex-start; }
+    .proj-name, .repo-name { word-break: break-all; }
+  }
+
+
 @keyframes fadeOut { 0%{opacity:1;transform:translate(-50%,-50%) translateY(0)} 70%{opacity:1} 100%{opacity:0;transform:translate(-50%,-50%) translateY(-20px)} }
 </style>
 
