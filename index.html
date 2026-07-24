@@ -216,6 +216,24 @@
 
   }
 
+  /* ============ CUSTOM SCROLLBAR ============ */
+  .page::-webkit-scrollbar { width: 6px; }
+
+  .page::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .page::-webkit-scrollbar-thumb {
+    background: rgba(252,238,10,0.15); border-radius: 3px;
+    border: 1px solid rgba(252,238,10,0.08);
+  }
+
+  .page::-webkit-scrollbar-thumb:hover {
+    background: rgba(252,238,10,0.35);
+    box-shadow: 0 0 10px rgba(252,238,10,0.2);
+  }
+
+  .page { scrollbar-color: rgba(252,238,10,0.15) transparent; scrollbar-width: thin; }
   .page.active { opacity: 1; pointer-events: all; z-index: 10; }
 
   .page-inner { width: 100%; max-width: var(--max-w); }
