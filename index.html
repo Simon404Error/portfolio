@@ -1684,11 +1684,29 @@ let wheelTimeout;
 
 window.addEventListener('wheel', e => {
 
-  // On pages 3 (PROJECTS) and 5 (MATRIX), let wheel scroll content naturally
-  if (currentPage === 3 || currentPage === 5) return;
-  e.preventDefault();
-
   if (isTransitioning) return;
+
+  // On pages 3 (PROJECTS) and 5 (MATRIX): scroll content, flip at edges
+  if (currentPage === 3 || currentPage === 5) {
+    const page = pages[currentPage];
+    const atTop = page.scrollTop <= 0;
+    const atBottom = page.scrollTop + page.clientHeight >= page.scrollHeight - 2;
+    if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
+      e.preventDefault();
+      wheelAccum += e.deltaY;
+      clearTimeout(wheelTimeout);
+      wheelTimeout = setTimeout(() => {
+        if (wheelAccum > 50) goToPage(currentPage + 1);
+        else if (wheelAccum < -50) goToPage(currentPage - 1);
+        wheelAccum = 0;
+      }, 150);
+      return;
+    }
+    wheelAccum = 0;
+    return;
+  }
+
+  e.preventDefault();
 
   wheelAccum += e.deltaY;
 
